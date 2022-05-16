@@ -3,7 +3,7 @@
 The Gonda Multidisciplinary Brain Research Center at BIU 
 https://gondabrain.biu.ac.il/en  
 
-Check out the proposed framework via a simple illustration of our analysis
+Please find the posed framework via a simple illustration of our analysis
 
 Network features we used:
 - degrees_in
