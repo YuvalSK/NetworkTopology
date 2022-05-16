@@ -1,11 +1,5 @@
-#!/usr/bin/env python
-# coding: utf-8
-
-# ### PCA to find a measure of maximun topological variance 
-# Analysis of network topology correlation matrix to identify individual differences over the 100 most popular DOIs in LJ
-
-# In[3]:
-
+# after calculating the correlation matrix, in this code we reduce its dimensions via PCA
+# our goal here is to find the maximun topological variance of the 20-D correlation matrix over the 94 most popular DOIs in LJ
 
 from sklearn.decomposition import PCA
 from sklearn import preprocessing
@@ -22,65 +16,73 @@ plt.rcParams["figure.figsize"] = (12,10)
 colors = dict(mcolors.BASE_COLORS, **mcolors.CSS4_COLORS)
 k=1 #statistic SEM (vs. SD)
 snaps=[19]
-doi2dep = pd.read_csv('Data/doi2dep.csv') # to associated with depression (high/low)
-#doi2depT = pd.read_csv('Data/doi2depT.csv') # to associated with low depression
-#doi2depW = pd.read_csv('Data/doi2depW.csv') # to associated with High depression 
-
-#doi2met = pd.read_csv('Data/doi2meta.csv') # to associated with meta traits 
-#doi2per = pd.read_csv('Data/doi2big5.csv') # to associated with big five traits 
-#doi2gen = pd.read_csv('Data/doi2gender.csv') # to associated with gender 
+doi2NLP = pd.read_csv('Data/dictionaries/NLP/‏‏doi2personality.csv') # to associated with NLP
+doi2Dep = pd.read_csv('Data/dictionaries/depression/doi2dep.csv') # to associated with depression
+#doi2met = pd.read_csv('Data/dictionaries/meta/doi2meta.csv') # to associated with meta traits 
+#doi2per = pd.read_csv('Data/dicrionaries/bigfive/doi2big5.csv') # to associated with big five traits 
+#doi2gen = pd.read_csv('Data/dictionaties/gender/doi2gender.csv') # to associated with gender 
 
 # PCA Analysis
-for snap in snaps:
-    print(f'---processing snapshot number:{snap}---')
+def s_PCA(snap):
+    print(f'Loading PCA on snapshot: {snap}')
     plt.clf()
     dataset = pd.read_csv('Data/snap_{}_dois_100.csv'.format(snap),index_col=0)    
+
+    #implementing PCA 
     norm_data = preprocessing.scale(dataset)
     pca = PCA()
     pca.fit(norm_data)
     pca_data = pca.transform(norm_data)
     
-    #evaluate PCA
+    #exploring results
     exp_var = np.round(pca.explained_variance_ratio_ *100, decimals=1)
     features_w = pca.components_
     labels = ['PC' + str(n) for n in range(1,len(exp_var)+1)]       
     pca_df = pd.DataFrame(pca_data, columns=labels,index=dataset.index)
     pca_df.to_csv(f'Data/pca{snap}_dep.csv')
-    #print(np.sum(features_w[1]**2)) # to make sure they sum to 1
+    #print(np.sum(features_w[1]**2)) # weights^2 should sum up to 1
     
-    ###### DOIs in PCA space ######
+    #present in 2-D space - PC1 and PC2
     plt.scatter(pca_df.PC1,pca_df.PC2, facecolors='none', edgecolors='gray')
     plt.xlabel(f'PC1 [{exp_var[0]}%]')
     plt.ylabel(f'PC2 [{exp_var[1]}%]')
     
-    #how the most popular span in PCA space
-    dois_list = ['music','movies','reading','writing','art','books']
+    #highlight the most popular DOIs in this 2-D space
+    dois_list = ['music','movies','reading','writing','art','books','photography', 'friends']
     for doi in pca_df.index:
         if doi in dois_list:
-            plt.annotate(doi,(pca_df.PC1.loc[doi], pca_df.PC3.loc[doi]),fontsize=12,xytext=(-20,20), 
-                textcoords='offset points', ha='center', va='bottom',
-                bbox=dict(boxstyle='round,pad=0.2', fc='yellow', alpha=0.3),
-                arrowprops=dict(arrowstyle='->', connectionstyle='arc3,rad=0.5', color='red'))
-        elif doi == 'photography' or doi=='friends':
-            plt.annotate(doi,(pca_df.PC1.loc[doi], pca_df.PC3.loc[doi]),fontsize=12,xytext=(-30,-30), 
-                textcoords='offset points', ha='center', va='bottom',bbox=dict(boxstyle='round,pad=0.2', fc='yellow', alpha=0.3),
-                arrowprops=dict(arrowstyle='->', connectionstyle='arc3,rad=0.5', color='red'))
-    
+            plt.annotate(doi,(pca_df.PC1.loc[doi], pca_df.PC2.loc[doi]),fontsize=16,c='b')
+        else:
+            plt.annotate(doi,(pca_df.PC1.loc[doi], pca_df.PC2.loc[doi]),fontsize=12)
+
     plt.title(f'DOIs over PC space snapshot:{snap}')
     plt.tight_layout()
-    #plt.savefig(f'Results/DOIs_dep{snap}',dpi=300)
+    plt.xlim(-10,10)
+    plt.ylim(-5,15)
+    plt.savefig(f'Results/PCA/DOIs_{snap}',dpi=300)
     
-    '''
-    #how the Low depression DOIs span in PCA space
-    pos_doi = ['music','books','fantasy','movies','acting','talking']
-    neg_doi = ['life','psychology','sleep','eating','sleeping','drinking']
+s_PCA(19)
+
+#how the DOIs span in PC 2-D space by clusters:
+## 1) NLP:
+'''
+pos = doi2NLP[doi2NLP.Per =='low E']['doi'].tolist()
+neg = doi2NLP[doi2NLP.Per =='low N']['doi'].tolist()
+'''
+
+## 2) depression:
+pos = doi2dep[doi2Dep.Dep =='High']['DOIs'].tolist()
+neg = doi2dep[doi2Dep.Dep =='Low']['DOIs'].tolist()
+
+
+def DOIs2Attribute(pos_dois,neg_dois):
     for doi in pca_df.index:
-        if doi in pos_doi:
+        if doi in pos_dois:
             plt.annotate(doi,(pca_df.PC1.loc[doi], pca_df.PC2.loc[doi]),fontsize=12,xytext=(-40,-40), 
                 textcoords='offset points', ha='center', va='bottom',
                 bbox=dict(boxstyle='round,pad=0.2', fc='g', alpha=0.3),
                 arrowprops=dict(arrowstyle='->', connectionstyle='arc3,rad=0.5', color='k'))
-        elif doi in neg_doi:
+        elif doi in neg_dois:
             plt.annotate(doi,(pca_df.PC1.loc[doi], pca_df.PC2.loc[doi]),fontsize=12,xytext=(-40,-40), 
                 textcoords='offset points', ha='center', va='bottom',
                 bbox=dict(boxstyle='round,pad=0.2', fc='r', alpha=0.3),
@@ -88,102 +90,100 @@ for snap in snaps:
             
     plt.title(f'DOIs over PC space snapshot:{snap}')
     plt.tight_layout()
-    plt.savefig(f'Results/DOIs_dep{snap}',dpi=300)
-    
-    '''
-    ###### DOIs in features space ######
-    plt.clf()
-    fig, ax = plt.subplots(figsize=(12,10))
-    x_axis_labels =  [str(f'$\it{c}$') for c in dataset.columns[0:]]
-    x = np.arange(len(x_axis_labels))
-    
-    #sort features by PC weights
-    y, sorted_labels = zip(*sorted(zip(features_w[0], x_axis_labels), reverse=True))  
-    ax.set_ylabel('PC1 weights [AU]')
-    ax.set_xlabel('NAV features')
-    ax.set_xticks(x)
-    ax.set_xticklabels(sorted_labels, rotation=45,fontsize=12,ha="right",)
-    ax.bar(x,y,color='gray')
-    ax.axvline(4.5,color='k')
-    ax.axhline(0,color='k')
-    ax.set_ylim(-0.1, 0.3)
-    ax.set_yticks(np.arange(-0.1, 0.3, step=0.1))
-    fig.align_labels()
-    #plt.savefig(f'Results/PC1Depfeatures_{snap}',dpi=150)
-    
-    '''
-    #How depression span on PC topological space
-    plt.clf()
-    fig, ax = plt.subplots(2,1,figsize=(12,10)) 
-    ax[0].set_title(f'Detailed PC space snapshot:{snap}')
-    ax[0].scatter(pca_df.PC1,pca_df.PC2, facecolors='none', edgecolors='gray')
-    ax[1].scatter(pca_df.PC1,pca_df.PC3, facecolors='none', edgecolors='gray')
+    plt.show()
+    #plt.savefig(f'Results/NLP/DOIs_dep{snap}',dpi=300)
 
-    ax[1].set_xlabel(f'PC1 ({exp_var[0]}%) [AU]')
-    ax[0].set_ylabel(f'PC2 ({exp_var[1]}%) [AU]')
-    ax[1].set_ylabel(f'PC3 ({exp_var[2]}%) [AU]')
+plt.scatter(pca_df.PC1,pca_df.PC2, facecolors='none', edgecolors='gray')
+DOIs2Attribute(pos, neg)
 
-    c = ['r', 'b']
-    bs=['High','Low']
-    for i,b in enumerate(bs):
-        x = []
-        y= []
-        for doi in doi2dep['DOIs']:
-            if doi2dep.loc[doi2dep['DOIs'] == doi,'Dep'].iloc[0] == b:
-                x.append(pca_df.PC1.loc[doi])
-                y.append(pca_df.PC2.loc[doi])
-        
-        xerror = k * np.std(x,ddof=1) / np.sqrt(len(x))
-        yerror = k * np.std(y,ddof=1) / np.sqrt(len(y))        
+'''
+###### DOIs in features space ######
+plt.clf()
+fig, ax = plt.subplots(figsize=(12,10))
+x_axis_labels =  [str(f'$\it{c}$') for c in dataset.columns[0:]]
+x = np.arange(len(x_axis_labels))
 
-        #ax[0].annotate(b,(np.mean(x), np.mean(y)),color=colors[c[i]],label=b)
-        ax[0].errorbar(np.mean(x), np.mean(y), xerr=xerror, yerr=yerror, capsize=3, ls='none', color=c[i], elinewidth=4, label=b)
-        ax[0].scatter(x,y, facecolors='none', edgecolors=c[i])
-
-        print('PC1 vs. PC2:')
-        print(f'{b}: mean:{np.mean(x):.3f}-{np.mean(y):.3f}, SEM:{xerror:.3f}-{yerror:.3f}')
-        
-    ax[0].set_xlim(-10, 10)
-    ax[0].set_ylim(-15, 15)
-    for i,b in enumerate(bs):
-        x = []
-        y= []
-        for doi in doi2dep['DOIs']:
-            if doi2dep.loc[doi2dep['DOIs'] == doi,'Dep'].iloc[0] == b:
-                x.append(pca_df.PC1.loc[doi])
-                y.append(pca_df.PC3.loc[doi])
-        
-        xerror = k * np.std(x,ddof=1) / np.sqrt(len(x))
-        yerror = k * np.std(y,ddof=1) / np.sqrt(len(y))        
-
-        #ax[0].annotate(b,(np.mean(x), np.mean(y)),color=colors[c[i]],label=b)
-        ax[1].errorbar(np.mean(x), np.mean(y), xerr=xerror, yerr=yerror, capsize=3, ls='none', color=c[i], elinewidth=4, label=b)
-        ax[1].scatter(x,y, facecolors='none', edgecolors=c[i])
-
-        print('PC1 vs. PC3:')
-        print(f'{b}-mean:{np.mean(x):.3f}-{np.mean(y):.3f}, SEM:{xerror:.3f}-{yerror:.3f}')
+#sort features by PC weights
+y, sorted_labels = zip(*sorted(zip(features_w[0], x_axis_labels), reverse=True))  
+ax.set_ylabel('PC1 weights [AU]')
+ax.set_xlabel('NAV features')
+ax.set_xticks(x)
+ax.set_xticklabels(sorted_labels, rotation=45,fontsize=12,ha="right",)
+ax.bar(x,y,color='gray')
+ax.axvline(4.5,color='k')
+ax.axhline(0,color='k')
+ax.set_ylim(-0.1, 0.3)
+ax.set_yticks(np.arange(-0.1, 0.3, step=0.1))
+fig.align_labels()
+#plt.savefig(f'Results/PC1Depfeatures_{snap}',dpi=150)
     
-    #ax[1].legend(bbox_to_anchor=(1., 1), loc=2, borderaxespad=0.)
-    ax[1].set_xlim(-10, 10)
-    ax[1].set_ylim(-3, 5)
-    ax[1].set_xticks(np.arange(-10, 12, step=2))
-    ax[0].set_xticks(np.arange(-10, 12, step=2))
+#How depression span on PC topological space
+plt.clf()
+fig, ax = plt.subplots(2,1,figsize=(12,10)) 
+ax[0].set_title(f'Detailed PC space snapshot:{snap}')
+ax[0].scatter(pca_df.PC1,pca_df.PC2, facecolors='none', edgecolors='gray')
+ax[1].scatter(pca_df.PC1,pca_df.PC3, facecolors='none', edgecolors='gray')
+
+ax[1].set_xlabel(f'PC1 ({exp_var[0]}%) [AU]')
+ax[0].set_ylabel(f'PC2 ({exp_var[1]}%) [AU]')
+ax[1].set_ylabel(f'PC3 ({exp_var[2]}%) [AU]')
+
+c = ['r', 'b']
+bs=['High','Low']
+for i,b in enumerate(bs):
+    x = []
+    y= []
+    for doi in doi2dep['DOIs']:
+        if doi2dep.loc[doi2dep['DOIs'] == doi,'Dep'].iloc[0] == b:
+            x.append(pca_df.PC1.loc[doi])
+            y.append(pca_df.PC2.loc[doi])
     
-    #ax[1].set_aspect('equal')
-    #ax[0].set_aspect('equal')  
-    #plt.legend(bbox_to_anchor=(1., 1), loc=2, borderaxespad=0.)
+    xerror = k * np.std(x,ddof=1) / np.sqrt(len(x))
+    yerror = k * np.std(y,ddof=1) / np.sqrt(len(y))        
+
+    #ax[0].annotate(b,(np.mean(x), np.mean(y)),color=colors[c[i]],label=b)
+    ax[0].errorbar(np.mean(x), np.mean(y), xerr=xerror, yerr=yerror, capsize=3, ls='none', color=c[i], elinewidth=4, label=b)
+    ax[0].scatter(x,y, facecolors='none', edgecolors=c[i])
+
+    print('PC1 vs. PC2:')
+    print(f'{b}: mean:{np.mean(x):.3f}-{np.mean(y):.3f}, SEM:{xerror:.3f}-{yerror:.3f}')
     
-    plt.tight_layout()
-    plt.savefig(f'Results/PCA_dep{snap}')
-    '''
+ax[0].set_xlim(-10, 10)
+ax[0].set_ylim(-15, 15)
+for i,b in enumerate(bs):
+    x = []
+    y= []
+    for doi in doi2dep['DOIs']:
+        if doi2dep.loc[doi2dep['DOIs'] == doi,'Dep'].iloc[0] == b:
+            x.append(pca_df.PC1.loc[doi])
+            y.append(pca_df.PC3.loc[doi])
+    
+    xerror = k * np.std(x,ddof=1) / np.sqrt(len(x))
+    yerror = k * np.std(y,ddof=1) / np.sqrt(len(y))        
+
+    #ax[0].annotate(b,(np.mean(x), np.mean(y)),color=colors[c[i]],label=b)
+    ax[1].errorbar(np.mean(x), np.mean(y), xerr=xerror, yerr=yerror, capsize=3, ls='none', color=c[i], elinewidth=4, label=b)
+    ax[1].scatter(x,y, facecolors='none', edgecolors=c[i])
+
+    print('PC1 vs. PC3:')
+    print(f'{b}-mean:{np.mean(x):.3f}-{np.mean(y):.3f}, SEM:{xerror:.3f}-{yerror:.3f}')
+
+#ax[1].legend(bbox_to_anchor=(1., 1), loc=2, borderaxespad=0.)
+ax[1].set_xlim(-10, 10)
+ax[1].set_ylim(-3, 5)
+ax[1].set_xticks(np.arange(-10, 12, step=2))
+ax[0].set_xticks(np.arange(-10, 12, step=2))
+
+#ax[1].set_aspect('equal')
+#ax[0].set_aspect('equal')  
+#plt.legend(bbox_to_anchor=(1., 1), loc=2, borderaxespad=0.)
+
+plt.tight_layout()
+plt.savefig(f'Results/PCA_dep{snap}')
+
 
 
 # # Visualization of closeness and motif3_8  
-
-# In[4]:
-
-
-# how features span DOIs
 snaps=[19]
 k=1
 plt.rcParams.update({'font.size': 18})
@@ -195,9 +195,9 @@ for snap in snaps:
     dataset.head()
     plt.scatter(dataset.closeness,dataset.motifs3_8, facecolors='none', edgecolors='gray')
     plt.xlabel('$\it{Closeness}$ [R]')
-    '''
+    
     '$\it{Motif3-8}$'
-    '''
+    
     plt.ylabel('$\it{Motif3-8}$ [R]')
     
     colors = ['r', 'b']
@@ -237,11 +237,9 @@ for snap in snaps:
     plt.savefig(f'Results/features_{snap}')
 
 
-# In[42]:
-
-
 
 data = np.array([pca_df.PC1.values,pca_df.PC2.values])
+'''
 
 def GM(k,data):
     gm = GaussianMixture(n_components = k).fit(data)
