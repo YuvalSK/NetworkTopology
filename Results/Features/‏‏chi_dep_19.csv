@@ -1,0 +1,13 @@
+﻿DOI,color,order,group
+life,Red,II,High
+psychology,Blue,I,High
+sleep,Red,II,High
+eating,Red,II,High
+sleeping,Red,II,High
+drinking,Red,II,High
+talking,Red,II,Low
+acting,Red,II,Low
+movies,Blue,I,Low
+fantasy,Blue,I,Low
+books,Red,II,Low
+music,Red,II,Low
