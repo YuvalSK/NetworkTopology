@@ -37,8 +37,10 @@ def wiki(words, n_words):
 '''
 
 total_words = 1000000
-#https://gosling.psy.utexas.edu/scales-weve-developed/ten-item-personality-measure-tipi/ten-item-personality-inventory-tipi/
 '''
+#Personality 
+## https://gosling.psy.utexas.edu/scales-weve-developed/ten-item-personality-measure-tipi/ten-item-personality-inventory-tipi/
+
 # from TIPI, we get the words for extravesrion:
 pos_words = ['outgoing','enthusiastic'] # high on extraversion 
 sim_words = twitter(pos_words, n_words = total_words)
@@ -47,16 +49,29 @@ sim_words = dict(sim_words)
 neg_words = ['reserved','quiet'] # low on extraversion
 disim_words = twitter(neg_words, n_words = total_words)    
 disim_words = dict(disim_words)
-'''
 
 # from TIPI, we get the words for neuroticism:
-pos_words = ['anxious','upset'] # high on extraversion 
+pos_words = ['anxious','upset'] # high on N 
 sim_words = twitter(pos_words, n_words = total_words)
 sim_words = dict(sim_words)
 
-neg_words = ['calm','stable'] # low on extraversion
+neg_words = ['calm','stable'] # low on N
 disim_words = twitter(neg_words, n_words = total_words)    
 disim_words = dict(disim_words)
+
+'''
+# Depression
+## https://ieeexplore.ieee.org/document/6784326
+
+# from LJ, the words are:
+pos_words = ['sadness','anxious'] # high on depression 
+sim_words = twitter(pos_words, n_words = total_words)
+sim_words = dict(sim_words)
+
+neg_words = ['ingestion','home','sexual'] # low on depression
+disim_words = twitter(neg_words, n_words = total_words)    
+disim_words = dict(disim_words)
+ 
 
 #dois = ['acting', 'animals', 'anime', 'art', 'basketball', 'biking', 'books', 'boys', 'camping', 'candles', 'cars', 'cats', 'cheese', 'chocolate', 'clothes', 'coffee', 'computers', 'concerts', 'cooking', 'dancing', 'dogs', 'drawing', 'dreams', 'drinking', 'driving', 'dvds', 'eating', 'family', 'family guy', 'fanfiction', 'fantasy', 'fashion', 'food', 'football', 'friends', 'girls', 'green day', 'guitar', 'guys', 'harry potter', 'hiking', 'history', 'hugs', 'internet', 'johnny depp', 'kissing', 'laughing', 'life', 'linkin park', 'literature', 'lord of the rings', 'love', 'manga', 'movies', 'music', 'nirvana', 'painting', 'philosophy', 'Photography', 'pictures', 'piercings', 'poetry', 'politics', 'psychology', 'punk', 'radiohead', 'rain', 'reading', 'rock', 'running', 'sex', 'shoes', 'shopping', 'singing', 'sleep', 'sleeping', 'snow', 'snowboarding', 'soccer', 'stars', 'summer', 'swimming', 'taking back sunday', 'talking', 'tattoos', 'the beatles', 'the used', 'travel', 'traveling', 'tv', 'vampires', 'video games', 'women', 'writing']
 
@@ -108,11 +123,9 @@ for doi in dois:
     
 d = {'doi': dois, 'positive_score': pos_scores, 'negative_scores': neg_scores}
 df = pd.DataFrame(d)
-df.to_csv('Data/dictionaries/NLP/doi2neuroticism.csv')
+df.to_csv('Data/dictionaries/NLP/doi2dep.csv')
 
 #######################################################################
-
-
         
 scores = []
 for doi in dois:
@@ -133,8 +146,6 @@ for doi in dois:
     scores.append(t_score/count)
     
     
-
-
 
 '''
 2) sentence level similarity ???
